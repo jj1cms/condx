@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+  <title>CondX — バンドコンディション</title>
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="HFバンドコンディション可視化 — 太陽指数・MUF・DXクラスタ">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CondX">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">CondX <span id="app-version" class="ver"></span></div>
+    <div class="head-right">
+      <span id="mini-stat" class="mini">—</span>
+      <button id="btn-refresh" class="icon-btn" title="更新">⟳</button>
+    </div>
+  </header>
+  <div id="status" class="statusline">loading…</div>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="view-dash" class="view active">
+      <div id="open-summary" class="open-summary">…</div>
+      <div id="solar-cards" class="solar-cards"></div>
+      <div id="ctx-line" class="ctx-line"></div>
+      <h2 class="sec-title">バンドコンディション <small>now</small></h2>
+      <div id="band-grid" class="band-grid"></div>
+      <p class="legend">
+        <span class="lg st-excellent"></span>Excellent
+        <span class="lg st-good"></span>Good
+        <span class="lg st-fair"></span>Fair
+        <span class="lg st-poor"></span>Poor
+        <span class="lg st-closed"></span>Closed
+        <span class="lg st-es"></span>Es
+      </p>
+      <p class="disclaimer">※ 近傍電離層観測点(KC2G/GIRO)の実測MUFと太陽指数からの推定です。実際の交信状況とは異なります。</p>
+    </section>
+
+    <!-- MAP -->
+    <section id="view-map" class="view">
+      <div class="map-tabs">
+        <button class="mt active" data-mt="muf">MUFマップ</button>
+        <button class="mt" data-mt="world">世界マップ</button>
+      </div>
+      <div id="map-muf" class="map-pane active">
+        <img id="muf-img" alt="Global MUF map (KC2G)" loading="lazy">
+        <p class="caption">世界のMUF(3000km)。色が周波数 — 高いほど上のバンドが開けます。出典: prop.kc2g.com</p>
+      </div>
+      <div id="map-world" class="map-pane">
+        <div id="leaflet"></div>
+        <p class="caption">📍自局 / ●電離層観測点(MUFで色分け) / 影=夜間グレーライン</p>
+      </div>
+    </section>
+
+    <!-- DX -->
+    <section id="view-dx" class="view">
+      <div class="dx-head">
+        <h2 class="sec-title">DXクラスタ <small id="dx-meta"></small></h2>
+        <button id="btn-dx-refresh" class="btn small">更新</button>
+      </div>
+      <div id="dx-list" class="dx-list"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <h2 class="sec-title">設定</h2>
+      <div class="form">
+        <label>コールサイン<input id="set-call" type="text" autocapitalize="characters"></label>
+        <div class="row">
+          <label>グリッド<input id="set-grid" type="text" placeholder="PM95uq"></label>
+          <button id="btn-geo" class="btn small">現在地</button>
+        </div>
+        <div class="row">
+          <label>緯度<input id="set-lat" type="number" step="0.01"></label>
+          <label>経度<input id="set-lon" type="number" step="0.01"></label>
+        </div>
+        <label>自動更新（分）<input id="set-refresh" type="number" min="2" step="1"></label>
+        <button id="btn-save" class="btn">保存</button>
+
+        <h3>通知ウォッチ</h3>
+        <p class="muted small">選択したバンドが開放したら通知します。</p>
+        <div id="watch-boxes" class="watch-boxes"></div>
+        <button id="btn-notify" class="btn">通知を有効化</button>
+        <p class="muted small">iPhoneは「ホーム画面に追加」後、PWAを開いた状態で通知が届きます。</p>
+
+        <h3>データ出典</h3>
+        <p class="muted small">
+          太陽指数: NOAA SWPC · MUF: prop.kc2g.com (GIRO) · DX: DX Summit / DXHeat.<br>
+          すべてブラウザから直接取得（サーバー不要）。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-tab="dash" class="active">☀️<span>状態</span></button>
+    <button data-tab="map">🗺️<span>マップ</span></button>
+    <button data-tab="dx">📡<span>DX</span></button>
+    <button data-tab="settings">⚙️<span>設定</span></button>
+  </nav>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/@joergdietrich/leaflet.terminator@1.3.0/L.Terminator.js"></script>
+  <script type="module" src="./js/app.js"></script>
+  <script>
+    // map sub-tabs (MUF image vs world map)
+    document.querySelectorAll('.map-tabs .mt').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.map-tabs .mt').forEach(x => x.classList.toggle('active', x === b));
+      document.getElementById('map-muf').classList.toggle('active', b.dataset.mt === 'muf');
+      document.getElementById('map-world').classList.toggle('active', b.dataset.mt === 'world');
+      if (b.dataset.mt === 'world') window.dispatchEvent(new Event('resize'));
+    }));
+  </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+// CondX — solar geometry + Maidenhead helpers (no dependencies)
+const RAD = Math.PI / 180;
+
+function dayOfYear(d) {
+  const start = Date.UTC(d.getUTCFullYear(), 0, 0);
+  const cur = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  return (cur - start) / 86400000;
+}
+
+// Sun elevation (degrees) at lat/lon for a given Date — NOAA approximation.
+// lon east-positive. > 0 ≈ daytime, < -6 ≈ night, in between ≈ twilight/grayline.
+export function sunElevation(date, lat, lon) {
+  const doy = dayOfYear(date);
+  const hour = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+  const g = (2 * Math.PI / 365) * (doy - 1 + (hour - 12) / 24);
+  const decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g)
+    - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g)
+    - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  const eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g)
+    - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  const tst = hour * 60 + eqtime + 4 * lon;        // true solar time, minutes
+  const ha = (tst / 4 - 180) * RAD;                 // hour angle
+  const latr = lat * RAD;
+  const cosZen = Math.sin(latr) * Math.sin(decl) +
+    Math.cos(latr) * Math.cos(decl) * Math.cos(ha);
+  const zen = Math.acos(Math.min(1, Math.max(-1, cosZen)));
+  return 90 - zen / RAD;
+}
+
+// Great-circle distance (km) between two points.
+export function distanceKm(lat1, lon1, lat2, lon2) {
+  const dLat = (lat2 - lat1) * RAD;
+  const dLon = (lon2 - lon1) * RAD;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * RAD) * Math.cos(lat2 * RAD) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Maidenhead grid -> {lat, lon} (centre of square). Returns null if invalid.
+export function gridToLatLon(grid) {
+  grid = (grid || '').trim().toUpperCase();
+  if (!/^[A-R]{2}[0-9]{2}([A-X]{2})?$/.test(grid)) return null;
+  let lon = (grid.charCodeAt(0) - 65) * 20 - 180;
+  let lat = (grid.charCodeAt(1) - 65) * 10 - 90;
+  lon += (+grid[2]) * 2;
+  lat += (+grid[3]) * 1;
+  if (grid.length >= 6) {
+    lon += (grid.charCodeAt(4) - 65) * (2 / 24) + (1 / 24);
+    lat += (grid.charCodeAt(5) - 65) * (1 / 24) + (0.5 / 24);
+  } else { lon += 1; lat += 0.5; }
+  return { lat, lon };
+}
+
+// {lat, lon} -> 6-char Maidenhead grid.
+export function latLonToGrid(lat, lon) {
+  lon += 180; lat += 90;
+  const A = Math.floor(lon / 20), B = Math.floor(lat / 10);
+  const C = Math.floor((lon % 20) / 2), D = Math.floor(lat % 10);
+  const e = Math.floor((lon % 2) * 12), f = Math.floor((lat % 1) * 24);
+  return String.fromCharCode(65 + A) + String.fromCharCode(65 + B) + C + D +
+    String.fromCharCode(97 + e) + String.fromCharCode(97 + f);
+}
