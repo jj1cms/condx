@@ -39,7 +39,10 @@ export async function getStations() {
       lat: parseFloat(st.latitude),
       lon,
       mufd: s.mufd != null ? +s.mufd : null,   // MUF(3000) in MHz
-      fof2: s.fof2 != null ? +s.fof2 : null,
+      fof2: s.fof2 != null ? +s.fof2 : null,    // F2 critical freq (MHz)
+      foes: s.foes != null ? +s.foes : null,    // sporadic-E critical freq (MHz)
+      hmf2: s.hmf2 != null ? +s.hmf2 : null,    // F2 reflection height (km)
+      md:   s.md   != null ? +s.md   : null,    // M(3000) obliquity factor
       time: t,
       ageMin: Number.isFinite(t) ? Math.round((now - t) / 60000) : null
     };

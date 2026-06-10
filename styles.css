@@ -175,7 +175,45 @@ main { padding: 8px 14px 0; max-width: 760px; margin: 0 auto; }
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ---- path-to-target panel ---- */
+.tgt-form { display: flex; gap: 8px; }
+.tgt-form input {
+  flex: 1; background: var(--card); border: 1px solid var(--line); color: var(--tx);
+  padding: 10px; border-radius: 9px; font-size: 16px;
+}
+.tgt-presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+.chip {
+  background: var(--card); border: 1px solid var(--line); color: var(--mut);
+  padding: 6px 11px; border-radius: 999px; font-size: 12px; cursor: pointer;
+}
+.chip:active { background: var(--card2); color: var(--tx); }
+.tgt-result { margin: 10px 0 4px; }
+.tgt-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 14px;
+}
+.tgt-head b { color: var(--accent); }
+.tgt-head span { font-size: 12px; color: var(--mut); font-variant-numeric: tabular-nums; }
+.tgt-sub { font-size: 12.5px; color: var(--mut); margin: 4px 2px 10px; }
+.tgt-sub b { color: var(--tx); }
+.tgt-es { color: var(--es); }
+.tgt-bands { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.tgt-band {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--closed);
+  border-radius: 9px; padding: 7px 2px;
+}
+.tb-id { font-weight: 700; font-size: 13px; }
+.tb-v { font-size: 11px; color: var(--mut); }
+.tgt-band.tb-open    { border-top-color: var(--good); }
+.tgt-band.tb-open    .tb-v { color: var(--good); }
+.tgt-band.tb-marginal{ border-top-color: var(--fair); }
+.tgt-band.tb-marginal .tb-v { color: var(--fair); }
+.tgt-band.tb-closed  { border-top-color: var(--closed); opacity: .75; }
+.tgt-band.tb-es      { border-top-color: var(--es); }
+.tgt-band.tb-es      .tb-v { color: var(--es); }
+
 @media (min-width: 560px) {
   .solar-cards { gap: 10px; }
   .watch-boxes { grid-template-columns: repeat(10, 1fr); }
+  .tgt-bands { grid-template-columns: repeat(10, 1fr); }
 }

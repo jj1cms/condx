@@ -42,6 +42,15 @@
         <span class="lg st-es"></span>Es
       </p>
       <p class="disclaimer">※ 近傍電離層観測点(KC2G/GIRO)の実測MUFと太陽指数からの推定です。実際の交信状況とは異なります。</p>
+
+      <h2 class="sec-title">相手局へ届く? <small>パスMUF（入射角考慮）</small></h2>
+      <div class="tgt-form">
+        <input id="tgt-in" type="text" autocapitalize="characters"
+               placeholder="相手のグリッド (例 JN18) か 緯度,経度">
+        <button id="btn-tgt" class="btn small">判定</button>
+      </div>
+      <div id="tgt-presets" class="tgt-presets"></div>
+      <div id="tgt-result" class="tgt-result"></div>
     </section>
 
     <!-- MAP -->

@@ -36,6 +36,17 @@ export function distanceKm(lat1, lon1, lat2, lon2) {
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Great-circle midpoint between two points -> {lat, lon}. Used to read the MUF
+// at the controlling reflection region of a path (its midpoint).
+export function midpoint(lat1, lon1, lat2, lon2) {
+  const p1 = lat1 * RAD, p2 = lat2 * RAD, dl = (lon2 - lon1) * RAD;
+  const bx = Math.cos(p2) * Math.cos(dl), by = Math.cos(p2) * Math.sin(dl);
+  const pm = Math.atan2(Math.sin(p1) + Math.sin(p2),
+    Math.sqrt((Math.cos(p1) + bx) ** 2 + by ** 2));
+  const lm = lon1 * RAD + Math.atan2(by, Math.cos(p1) + bx);
+  return { lat: pm / RAD, lon: ((lm / RAD + 540) % 360) - 180 };
+}
+
 // Maidenhead grid -> {lat, lon} (centre of square). Returns null if invalid.
 export function gridToLatLon(grid) {
   grid = (grid || '').trim().toUpperCase();

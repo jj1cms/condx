@@ -44,8 +44,9 @@ export function buildContext({ mufd, fof2, lat, lon, sfi, kp, date = new Date() 
   };
 }
 
-// Fallback MUF when no live ionosonde reading is available (very rough).
-function estimateMuf(sfi, elev) {
+// Fallback MUF(3000) when no live ionosonde reading is available (very rough).
+// Exported so the path-MUF engine can estimate the midpoint MUF the same way.
+export function estimateMuf(sfi, elev) {
   const dayFactor = Math.max(0, Math.sin(elev * Math.PI / 180));
   const fof2 = 2.5 + 0.018 * (sfi || 90) + 8 * dayFactor;
   return +(fof2 * 3.0).toFixed(1);

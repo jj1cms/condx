@@ -8,6 +8,7 @@ import { loadSettings, saveSettings } from './store.js';
 import * as notify from './notify.js';
 import * as mapview from './mapview.js';
 import { latLonToGrid, gridToLatLon } from './geo.js';
+import { evaluatePath } from './path.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (t, c, html) => { const e = document.createElement(t); if (c) e.className = c; if (html != null) e.innerHTML = html; return e; };
@@ -15,6 +16,17 @@ const el = (t, c, html) => { const e = document.createElement(t); if (c) e.class
 let settings = loadSettings();
 let state = { solar: null, stations: [], stationsFresh: [], stationStatus: null, nearest: null, results: [], ctx: null };
 let mapReady = false, refreshTimer = null;
+let lastTarget = null;   // { input, label } of the last path evaluated
+
+// Representative DX-region grids for the quick-target chips.
+const TARGETS = [
+  { label: 'ヨーロッパ', grid: 'JN18' },   // Paris
+  { label: '北米東',     grid: 'FN30' },   // New York
+  { label: '北米西',     grid: 'DM04' },   // Los Angeles
+  { label: '南米',       grid: 'GG66' },   // São Paulo
+  { label: 'アフリカ',   grid: 'KG44' },   // East/South Africa
+  { label: 'オセアニア', grid: 'QF56' }    // Sydney
+];
 
 // ---------- boot ----------
 function boot() {
@@ -22,6 +34,7 @@ function boot() {
   buildSettingsForm();
   wireTabs();
   wireRefresh();
+  wireTarget();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
@@ -121,6 +134,8 @@ function renderDashboard() {
   $('#open-summary').innerHTML = open.length
     ? `🟢 開けている: <b>${open.join(', ')}</b>`
     : `今は強い開放なし — low bands / 夜間を確認`;
+
+  if (lastTarget) computeTarget(lastTarget.input, lastTarget.label);   // refresh path verdict
 }
 
 function card(label, value, sub, level) {
@@ -149,6 +164,71 @@ function toggleWatch(band) {
   notify.resetBaseline();
   renderDashboard();
   syncWatchChecks();
+}
+
+// ---------- path-to-target (does <band> reach a given location?) ----------
+function wireTarget() {
+  const presets = $('#tgt-presets');
+  presets.replaceChildren(...TARGETS.map(t => {
+    const b = el('button', 'chip', t.label);
+    b.addEventListener('click', () => { $('#tgt-in').value = t.grid; computeTarget(t.grid, t.label); });
+    return b;
+  }));
+  $('#btn-tgt').addEventListener('click', () => computeTarget($('#tgt-in').value));
+  $('#tgt-in').addEventListener('keydown', e => { if (e.key === 'Enter') computeTarget($('#tgt-in').value); });
+  renderTarget(null);
+}
+
+// Accept a Maidenhead grid, or "lat,lon" decimal degrees.
+function parseTarget(s) {
+  s = (s || '').trim();
+  const ll = gridToLatLon(s);
+  if (ll) return ll;
+  const m = s.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if (m) {
+    const lat = +m[1], lon = +m[2];
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return { lat, lon };
+  }
+  return null;
+}
+
+function computeTarget(input, label) {
+  const tgt = parseTarget(input);
+  if (!tgt) { lastTarget = null; renderTarget(null, null, true); return; }
+  const ev = evaluatePath({
+    qth: { lat: settings.lat, lon: settings.lon },
+    target: tgt,
+    sfi: state.solar ? state.solar.sfi : null,
+    stationsFresh: state.stationsFresh
+  });
+  lastTarget = { input, label };
+  renderTarget(ev, label || latLonToGrid(tgt.lat, tgt.lon));
+}
+
+function renderTarget(ev, label, invalid) {
+  const r = $('#tgt-result');
+  if (!ev) {
+    r.innerHTML = invalid
+      ? `<p class="muted small">グリッド (例 <b>JN18</b>) か「<b>緯度,経度</b>」(例 48.8,2.3) を入力してください。</p>`
+      : `<p class="muted small">相手のグリッド/座標を入れると、経路距離・ホップ数・入射角から各バンドの開閉を判定します。</p>`;
+    return;
+  }
+  const f2 = ev.f2;
+  const src = ev.estimated ? '推定' : '実測';
+  const esLine = ev.es
+    ? ` · <span class="tgt-es">Es-MUF ${ev.es.muf}（foEs ${ev.es.foEs}, ${ev.es.station} ${ev.es.ageMin}分前）</span>`
+    : '';
+  const head =
+    `<div class="tgt-head"><b>${escapeHtml(label || '')}</b>
+       <span>${ev.distanceKm.toLocaleString()} km · ${f2.hops}ホップ · 打上げ角 ${f2.elevDeg.toFixed(0)}° · 入射角 ${f2.incDeg.toFixed(0)}°</span></div>
+     <div class="tgt-sub">中点MUF(3000) ${ev.muf3000} → <b>パスMUF ${ev.pathMuf} MHz</b>
+       <span class="muted">(${src}・h′${ev.hPrime}km)</span>${esLine}</div>`;
+  const chips = ev.bands.map(b => {
+    const v = b.esOpen ? 'Es可' : b.label;
+    const cls = b.esOpen ? 'tb-es' : 'tb-' + b.status;
+    return `<div class="tgt-band ${cls}"><span class="tb-id">${b.band}</span><span class="tb-v">${v}</span></div>`;
+  }).join('');
+  r.innerHTML = head + `<div class="tgt-bands">${chips}</div>`;
 }
 
 // ---------- map ----------

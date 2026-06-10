@@ -1,9 +1,9 @@
 // CondX service worker — offline app shell, always-fresh data.
-const CACHE = 'condx-v6';
+const CACHE = 'condx-v7';
 const SHELL = [
   './', './index.html', './styles.css', './manifest.webmanifest',
   './js/app.js', './js/config.js', './js/geo.js', './js/solar.js', './js/muf.js',
-  './js/bands.js', './js/dx.js', './js/store.js', './js/notify.js', './js/mapview.js',
+  './js/bands.js', './js/path.js', './js/dx.js', './js/store.js', './js/notify.js', './js/mapview.js',
   './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'
 ];
 
