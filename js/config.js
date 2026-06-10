@@ -10,6 +10,10 @@ export const DATA = {
   solarCycle: 'https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json',
   kc2gStations: 'https://prop.kc2g.com/api/stations.json',
   kc2gMufMap:   'https://prop.kc2g.com/renders/current/mufd-normal-now.svg',
+  // Your own Cloudflare Worker that re-serves kc2gStations with CORS (see
+  // workers/ + README). Leave '' to keep using the allorigins fallback below.
+  // Once deployed, set e.g. 'https://condx-kc2g-proxy.<subdomain>.workers.dev/'.
+  kc2gProxy:  '',
   // DX spots — third-party uptime varies. Tried direct first, then via proxy.
   dxSummit:   'https://www.dxsummit.fi/api/v1/spots/',
   corsProxy:  'https://api.allorigins.win/raw?url='   // prepend + encodeURIComponent(url)

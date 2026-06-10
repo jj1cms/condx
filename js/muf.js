@@ -13,12 +13,20 @@ async function fetchJSONWithTimeout(url, ms = 8000) {
 }
 
 // Normalised list of ionosonde stations with a fresh MUF reading.
-// KC2G's stations.json sends no CORS header, so it is fetched through a CORS
-// proxy. This is best-effort — the band engine falls back to estimated MUF
-// (no station data) whenever this fails.
+// KC2G's stations.json sends no CORS header, so it must be proxied. We try the
+// user's own Cloudflare Worker first (reliable, see workers/), then fall back to
+// the public allorigins proxy. If both fail the band engine uses estimated MUF.
 export async function getStations() {
-  const url = DATA.corsProxy + encodeURIComponent(DATA.kc2gStations);
-  const raw = await fetchJSONWithTimeout(url, 8000);
+  const sources = [];
+  if (DATA.kc2gProxy) sources.push(DATA.kc2gProxy);                          // own Worker (CORS, direct)
+  sources.push(DATA.corsProxy + encodeURIComponent(DATA.kc2gStations));      // allorigins fallback
+
+  let raw = null, lastErr = null;
+  for (const url of sources) {
+    try { raw = await fetchJSONWithTimeout(url, 8000); break; }
+    catch (e) { lastErr = e; }
+  }
+  if (raw == null) throw lastErr || new Error('stations-unavailable');
   const now = Date.now();
   return raw.map(s => {
     const st = s.station || {};

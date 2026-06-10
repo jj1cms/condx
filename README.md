@@ -19,11 +19,39 @@
 |---|---|---|---|
 | SFI / SSN / K / A | NOAA SWPC (`services.swpc.noaa.gov`) | ✅ 直接取得 | 安定 |
 | 世界 MUF マップ画像 | KC2G (`prop.kc2g.com/renders`) | ✅ 直接取得 | GIRO データ、約4分更新 |
-| 電離層観測点 MUF/foF2 | KC2G (`/api/stations.json`) | ⚠️ CORSなし | プロキシ経由のベストエフォート。失敗時は推定MUFにフォールバック |
+| 電離層観測点 MUF/foF2 | KC2G (`/api/stations.json`) | ⚠️ CORSなし | 自前Worker推奨（下記）。無ければallorigins経由。失敗時は推定MUFにフォールバック |
 | DX スポット | DX Summit API | ⚠️ 不安定 | サーバー稼働状況に依存。失敗時はリンク表示 |
 
 > バンド判定は **QTH 直下の推定MUF（SFI＋太陽高度）を主軸**にしています。近く(<2500km)かつ新しい(<90分)
 > 実測観測点があるときだけ実測値を採用します。これは推定であり、実際の交信状況とは異なります。
+
+## Cloudflare Worker でプロキシ（任意・推奨）
+
+KC2G の `stations.json` は CORS ヘッダが無いため、既定では公開プロキシ
+(allorigins) 経由で取得しています。これは時間帯で不安定なので、`workers/` に
+**自前の極小プロキシ Worker** を用意しました（KC2G の1エンドポイントだけを
+CORS 付きで再配信。オープンプロキシではありません）。デプロイすると観測点ドットが
+安定して出ます。
+
+**方法A — Cloudflare ダッシュボード（node 不要・最短）**
+1. dash.cloudflare.com → Workers & Pages → Create → Worker
+2. 名前を `condx-kc2g-proxy` にして Deploy
+3. Edit code を開き、[`workers/kc2g-proxy.js`](workers/kc2g-proxy.js) の中身を全部貼り付けて Deploy
+4. 発行された `https://condx-kc2g-proxy.<あなた>.workers.dev/` をコピー
+
+**方法B — wrangler CLI**
+```bash
+cd workers
+npx wrangler login
+npx wrangler deploy        # → *.workers.dev URL が表示される
+```
+
+**仕上げ（共通）** — [`js/config.js`](js/config.js) の `DATA.kc2gProxy` に上記URLを設定して push:
+```js
+kc2gProxy: 'https://condx-kc2g-proxy.<あなた>.workers.dev/',
+```
+アプリは「自前Worker → 失敗時 allorigins」の順で取得します。設定後、世界マップ上部の
+バナーが `✅ 観測点 N点 取得` になれば成功です（空のままなら従来どおり allorigins）。
 
 ## ローカルで動かす
 
