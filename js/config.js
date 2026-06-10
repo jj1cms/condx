@@ -13,7 +13,7 @@ export const DATA = {
   // Your own Cloudflare Worker that re-serves kc2gStations with CORS (see
   // workers/ + README). Leave '' to keep using the allorigins fallback below.
   // Once deployed, set e.g. 'https://condx-kc2g-proxy.<subdomain>.workers.dev/'.
-  kc2gProxy:  '',
+  kc2gProxy:  'https://condx-kc2g-proxy.jun-homma.workers.dev/',
   // DX spots — third-party uptime varies. Tried direct first, then via proxy.
   dxSummit:   'https://www.dxsummit.fi/api/v1/spots/',
   corsProxy:  'https://api.allorigins.win/raw?url='   // prepend + encodeURIComponent(url)
