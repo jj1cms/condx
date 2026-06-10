@@ -24,7 +24,7 @@ export function initMap(el, lat, lon) {
   }).addTo(map);
 
   if (typeof L.terminator === 'function') {
-    terminator = L.terminator({ fillOpacity: 0.32, color: '#000', fillColor: '#000', weight: 1 });
+    terminator = L.terminator({ fillOpacity: 0.18, color: '#000', fillColor: '#000', weight: 1 });
     terminator.addTo(map);
   }
   stationLayer = L.layerGroup().addTo(map);
