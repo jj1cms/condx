@@ -119,11 +119,14 @@ function renderDashboard() {
   const n = state.nearest;
   const dn = ctx.isGrayline ? '🌅 グレーライン' : ctx.isDay ? '☀️ 昼' : '🌙 夜';
   const mufStr = ctx.mufd != null ? ctx.mufd.toFixed(1) : '—';
-  $('#ctx-line').innerHTML = n
-    ? `実測MUF <b>${n.name}</b>: <b>${n.mufd.toFixed(1)} MHz</b>` +
-      (n.fof2 ? ` · foF2 ${n.fof2.toFixed(1)}` : '') +
-      ` · ${n.distanceKm} km · ${n.ageMin ?? '?'}分前 · ${dn}`
-    : `推定MUF <b>${mufStr} MHz</b>（太陽指数＋太陽高度ベース） · ${dn}`;
+  const tag = ctx.estimated ? '推定' : '実測';
+  let line = `${tag} MUF(${ctx.refKm ?? 1000}km) <b>${mufStr} MHz</b>`;
+  line += n
+    ? ` · ${n.name} MUF(3000) ${n.mufd.toFixed(1)}` +
+      (n.fof2 ? ` foF2 ${n.fof2.toFixed(1)}` : '') +
+      ` · ${n.distanceKm} km · ${n.ageMin ?? '?'}分前`
+    : `（太陽指数＋太陽高度ベース）`;
+  $('#ctx-line').innerHTML = line + ` · ${dn}`;
 
   // band grid
   const grid = $('#band-grid');

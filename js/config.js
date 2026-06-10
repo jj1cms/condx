@@ -19,6 +19,12 @@ export const DATA = {
   corsProxy:  'https://api.allorigins.win/raw?url='   // prepend + encodeURIComponent(url)
 };
 
+// Reference hop distance (km) the "状態" band grid is judged for. The ionosphere
+// supports a higher MUF on long, low-angle hops than on short, steep ones, so a
+// smaller value gives a stricter, more domestic/regional reading. Station/estimate
+// MUF arrives as MUF(3000) and is scaled to this distance via the secant law.
+export const BAND_REF_KM = 1000;
+
 // Amateur HF bands + 6m, with a representative frequency (MHz) used for openness.
 export const BANDS = [
   { id: '160m', freq: 1.83  },

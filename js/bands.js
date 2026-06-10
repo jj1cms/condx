@@ -1,8 +1,8 @@
 // CondX — band openness engine.
 // Turns MUF / foF2 / solar indices / day-night into a 0-100 score + status/color
 // per band. This is a heuristic estimate, not a propagation prediction model.
-import { BANDS } from './config.js';
-import { sunElevation } from './geo.js';
+import { BANDS, BAND_REF_KM } from './config.js';
+import { sunElevation, mufScale3000 } from './geo.js';
 
 export const STATUS = {
   excellent: { label: 'Excellent', cls: 'st-excellent', open: true },
@@ -32,8 +32,13 @@ function dayAbsorption(freq, elev) {
 // Build the context the classifier needs from current conditions.
 export function buildContext({ mufd, fof2, lat, lon, sfi, kp, date = new Date() }) {
   const elev = sunElevation(date, lat, lon);
+  // Sources give MUF(3000); scale to the band grid's reference distance so the
+  // verdict reflects a near/regional path (steeper angle → lower usable MUF).
+  const muf3000 = mufd ?? estimateMuf(sfi, elev);
   return {
-    mufd: mufd ?? estimateMuf(sfi, elev),
+    muf3000,
+    mufd: +(muf3000 * mufScale3000(BAND_REF_KM)).toFixed(1),
+    refKm: BAND_REF_KM,
     fof2,
     sfi, kp: kp ?? 0,
     elev,

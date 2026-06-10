@@ -47,6 +47,26 @@ export function midpoint(lat1, lon1, lat2, lon2) {
   return { lat: pm / RAD, lon: ((lm / RAD + 540) % 360) - 180 };
 }
 
+// Single-hop secant-law geometry: ground range d (km), virtual reflection height
+// h' (km). Curved-earth: ψ=d/2R, Δ=atan2(cosψ−R/(R+h'),sinψ), φ=90°−ψ−Δ.
+// Returns take-off elevation Δ, incidence angle φ and sec φ. Shared by the path
+// engine and the band-grid reference-distance scaling.
+export function hopGeometry(d, hPrime) {
+  const R = 6371;
+  const psi = d / (2 * R);
+  const k = R / (R + hPrime);
+  const elev = Math.atan2(Math.cos(psi) - k, Math.sin(psi));   // Δ (rad)
+  const inc = Math.PI / 2 - psi - elev;                        // φ (rad)
+  return { elevDeg: elev / RAD, incDeg: inc / RAD, sec: 1 / Math.cos(inc) };
+}
+
+// Factor that converts a MUF(3000) value to MUF(refKm): M(ref)/M(3000). The
+// ratio cancels the real-world obliquity correction baked into MUF(3000), so it
+// applies equally to measured and estimated MUF. ~0.57 for ref=1000km.
+export function mufScale3000(refKm, hPrime = 300) {
+  return hopGeometry(refKm, hPrime).sec / hopGeometry(3000, hPrime).sec;
+}
+
 // Maidenhead grid -> {lat, lon} (centre of square). Returns null if invalid.
 export function gridToLatLon(grid) {
   grid = (grid || '').trim().toUpperCase();

@@ -19,22 +19,12 @@
 // reproduces MUF(3000) exactly and other hop lengths scale by sec φ. The Es
 // layer is thin, so there the secant law is applied directly to foEs.
 import { BANDS } from './config.js';
-import { distanceKm, midpoint, sunElevation } from './geo.js';
+import { distanceKm, midpoint, sunElevation, hopGeometry } from './geo.js';
 import { estimateMuf } from './bands.js';
 
 const R = 6371;        // Earth radius, km
 const H_F2 = 300;      // default F2 virtual reflection height, km
 const H_ES = 105;      // sporadic-E layer height, km
-
-// Geometry of one hop: ground range d (km), reflection height h' (km).
-export function hopGeometry(d, hPrime) {
-  const psi = d / (2 * R);
-  const k = R / (R + hPrime);
-  const elev = Math.atan2(Math.cos(psi) - k, Math.sin(psi));   // Δ (rad)
-  const inc = Math.PI / 2 - psi - elev;                        // φ (rad)
-  const DEG = 180 / Math.PI;
-  return { elevDeg: elev * DEG, incDeg: inc * DEG, sec: 1 / Math.cos(inc) };
-}
 
 // Longest single hop (km) before the ray grazes the horizon (Δ→0); we stay at
 // 92% of that so the elevation angle keeps a few usable degrees.
