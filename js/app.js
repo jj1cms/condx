@@ -13,7 +13,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const el = (t, c, html) => { const e = document.createElement(t); if (c) e.className = c; if (html != null) e.innerHTML = html; return e; };
 
 let settings = loadSettings();
-let state = { solar: null, stations: [], stationsFresh: [], nearest: null, results: [], ctx: null };
+let state = { solar: null, stations: [], stationsFresh: [], stationStatus: null, nearest: null, results: [], ctx: null };
 let mapReady = false, refreshTimer = null;
 
 // ---------- boot ----------
@@ -42,12 +42,16 @@ function scheduleRefresh() {
 // ---------- data ----------
 async function refreshAll() {
   setStatus('updating…');
+  let stationStatus = null;
   const [solar, stations] = await Promise.all([
     getSolar().catch(() => null),
-    getStations().catch(() => [])
+    getStations()
+      .then(list => { stationStatus = { ok: true, count: list.length, time: new Date() }; return list; })
+      .catch(() => { stationStatus = { ok: false, time: new Date() }; return []; })
   ]);
   state.solar = solar;
   state.stations = stations;
+  state.stationStatus = stationStatus;
   // Stations recent enough to plot on the map (the feed keeps stale readings).
   state.stationsFresh = stations.filter(s => s.ageMin != null && s.ageMin < 180);
 
@@ -68,6 +72,7 @@ async function refreshAll() {
   state.results = classifyAll(state.ctx);
 
   renderDashboard();
+  renderStationStatus();
   if (mapReady) { mapview.updateStations(state.stationsFresh); mapview.refreshTerminator(); }
   setMufMap();
 
@@ -149,6 +154,25 @@ function toggleWatch(band) {
 // ---------- map ----------
 function setMufMap() { $('#muf-img').src = mufMapUrl(); }
 
+// Explicit success/failure indicator for the (proxy-based, best-effort)
+// ionosonde fetch, so the empty-map case is never ambiguous.
+function renderStationStatus() {
+  const el = $('#station-status');
+  if (!el) return;
+  const s = state.stationStatus;
+  if (!s) { el.className = 'map-status load'; el.textContent = '観測点データ取得中…'; return; }
+  if (!s.ok) {
+    el.className = 'map-status err';
+    el.textContent = `⚠️ 観測点データ取得失敗（プロキシ応答なし） · ${fmtTime(s.time)} — 推定MUFで表示中`;
+    return;
+  }
+  const fresh = state.stationsFresh.length;
+  el.className = 'map-status ok';
+  el.textContent = fresh
+    ? `✅ 観測点 ${s.count}点 取得（新しい: ${fresh}点） · ${fmtTime(s.time)}`
+    : `✅ 取得成功（${s.count}点）だが新しい観測点なし — ドット非表示 · ${fmtTime(s.time)}`;
+}
+
 function ensureMap() {
   if (mapReady) { mapview.resize(); return; }
   const m = mapview.initMap($('#leaflet'), settings.lat, settings.lon);
@@ -158,6 +182,7 @@ function ensureMap() {
     mapview.updateStations(state.stationsFresh);
     mapview.refreshTerminator();
   }
+  renderStationStatus();
 }
 
 // ---------- DX ----------
