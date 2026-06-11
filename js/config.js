@@ -14,7 +14,10 @@ export const DATA = {
   // workers/ + README). Leave '' to keep using the allorigins fallback below.
   // Once deployed, set e.g. 'https://condx-kc2g-proxy.<subdomain>.workers.dev/'.
   kc2gProxy:  'https://condx-kc2g-proxy.jun-homma.workers.dev/',
-  // DX spots — third-party uptime varies. Tried direct first, then via proxy.
+  // DX spots. HamQTH's CSV feed sends CORS '*' and is up reliably, so it's the
+  // primary (no proxy needed). DX Summit (frequently down) stays as a JSON
+  // fallback, tried direct then via the CORS proxy.
+  dxHamqth:   'https://www.hamqth.com/dxc_csv.php',
   dxSummit:   'https://www.dxsummit.fi/api/v1/spots/',
   corsProxy:  'https://api.allorigins.win/raw?url='   // prepend + encodeURIComponent(url)
 };

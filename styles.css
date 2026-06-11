@@ -126,6 +126,7 @@ main { padding: 8px 14px 0; max-width: 760px; margin: 0 auto; }
   border-radius: 9px; padding: 8px 10px;
 }
 .dx-call { grid-area: call; font-weight: 700; font-size: 15px; }
+.dx-call small { font-weight: 400; font-size: 11px; color: var(--mut); }
 .dx-freq { grid-area: freq; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .dx-freq small { display: block; font-weight: 400; color: var(--mut); font-size: 10px; }
 .dx-info { grid-area: info; font-size: 12px; color: var(--mut); display: flex; justify-content: space-between; gap: 8px; }

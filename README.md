@@ -21,7 +21,7 @@
 | SFI / SSN / K / A | NOAA SWPC (`services.swpc.noaa.gov`) | ✅ 直接取得 | 安定 |
 | 世界 MUF マップ画像 | KC2G (`prop.kc2g.com/renders`) | ✅ 直接取得 | GIRO データ、約4分更新 |
 | 電離層観測点 MUF/foF2/foEs/hmF2 | KC2G (`/api/stations.json`) | ⚠️ CORSなし | 自前Worker推奨（下記）。無ければallorigins経由。失敗時は推定MUFにフォールバック |
-| DX スポット | DX Summit API | ⚠️ 不安定 | サーバー稼働状況に依存。失敗時はリンク表示 |
+| DX スポット | HamQTH (`dxc_csv.php`) 主 / DX Summit 副 | ✅ CORS `*` / ⚠️ | HamQTHは直接取得で安定。失敗時は DX Summit→プロキシ→リンク表示。全fetchに8秒タイムアウト(ハング防止) |
 
 > 状態タブのバンド判定は **QTH 直下の推定MUF（SFI＋太陽高度）を主軸**にしています。近く(<2500km)かつ
 > 新しい(<90分)実測観測点があるときだけ実測値を採用します。観測点/推定が返す MUF(3000) を、近距離/国内

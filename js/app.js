@@ -282,10 +282,11 @@ function renderDX(res) {
   $('#dx-meta').textContent = `${res.spots.length} spots · ${res.source}`;
   box.replaceChildren(...res.spots.map(sp => {
     const cls = sp.band ? `sp-${sp.band}` : '';
+    const country = sp.country ? ` <small>${escapeHtml(sp.country)}</small>` : '';
     return el('div', `dx-row ${cls}`,
-      `<div class="dx-call">${sp.dx}</div>
+      `<div class="dx-call">${escapeHtml(sp.dx || '?')}${country}</div>
        <div class="dx-freq">${(sp.freq / 1000).toFixed(1)}<small>${sp.band || ''}</small></div>
-       <div class="dx-info">${escapeHtml(sp.comment || '')}<span class="dx-de">de ${sp.spotter || '?'} · ${shortTime(sp.time)}</span></div>`);
+       <div class="dx-info">${escapeHtml(sp.comment || '')}<span class="dx-de">de ${escapeHtml(sp.spotter || '?')} · ${shortTime(sp.time)}</span></div>`);
   }));
 }
 
